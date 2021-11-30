@@ -69,7 +69,7 @@ require_relative '../lib/15c_random_number'
 # will need to stub any inside methods because they will be called when you
 # create an instance of the class.
 
-# 2. You do not have to test methods that only contain 'puts' or 'gets' 
+# 2. You do not have to test methods that only contain 'puts' or 'gets'
 # because they are well-tested in the standard Ruby library.
 
 # 3. Private methods do not need to be tested because they should have test
@@ -100,6 +100,10 @@ describe BinaryGame do
 
     subject(:game_input) { described_class.new(1, 10) }
 
+    let(:min) { game_input.instance_variable_get(:@minimum) }
+    let(:max) { game_input.instance_variable_get(:@maximum) }
+    let(:error_message) { "Input error! Please enter a number between #{min} or #{max}." }
+
     context 'when user number is between arguments' do
       before do
         valid_input = '3'
@@ -111,11 +115,8 @@ describe BinaryGame do
       # https://www.rubydoc.info/stdlib/core/2.0.0/Object:instance_variable_get
 
       it 'stops loop and does not display error message' do
-        min = game_input.instance_variable_get(:@minimum)
-        max = game_input.instance_variable_get(:@maximum)
-        error_message = "Input error! Please enter a number between #{min} or #{max}."
-        expect(game_input).not_to receive(:puts).with(error_message)
         game_input.player_input(min, max)
+        expect(game_input).not_to receive(:puts).with(error_message)
       end
     end
 
@@ -130,17 +131,30 @@ describe BinaryGame do
 
     context 'when user inputs an incorrect value once, then a valid input' do
       before do
+        invalid_input = 'a'
+        valid_input = '2'
+        allow(game_input).to receive(:gets).and_return(invalid_input, valid_input)
       end
 
-      xit 'completes loop and displays error message once' do
+      it 'completes loop and displays error message once' do
+        expect(game_input).to receive(:puts).with(error_message).once
+        game_input.player_input(min, max)
       end
     end
 
     context 'when user inputs two incorrect values, then a valid input' do
       before do
+        invalid_input = 'a'
+        another_invalid_input = '200'
+        valid_input = '2'
+        allow(game_input)
+          .to receive(:gets)
+          .and_return(invalid_input, another_invalid_input, valid_input)
       end
 
-      xit 'completes loop and displays error message twice' do
+      it 'completes loop and displays error message twice' do
+        expect(game_input).to receive(:puts).with(error_message).twice
+        game_input.player_input(min, max)
       end
     end
   end
@@ -153,15 +167,25 @@ describe BinaryGame do
     # Located inside #play_game (Looping Script Method)
     # Query Method -> Test the return value
 
+    subject(:game_input) { described_class.new(min, max) }
+
+    let(:min) { 1 }
+    let(:max) { 10 }
     # Note: #verify_input will only return a number if it is between?(min, max)
 
     context 'when given a valid input as argument' do
-      xit 'returns valid input' do
+      it 'returns valid input' do
+        valid_input = 1
+        subject = game_input.verify_input(min, max, valid_input)
+        expect(subject).to eq valid_input
       end
     end
 
     context 'when given invalid input as argument' do
-      xit 'returns nil' do
+      it 'returns nil' do
+        valid_input = 200
+        subject = game_input.verify_input(min, max, valid_input)
+        expect(subject).to be_nil
       end
     end
   end
@@ -251,7 +275,11 @@ describe BinaryGame do
 
     # Write a test for the following context.
     context 'when game minimum and maximum is 100 and 600' do
-      xit 'returns 9' do
+      subject(:game_600) { described_class.new(100, 600) }
+
+      it 'returns 9' do
+        max = game_600.maximum_guesses
+        expect(max).to eq(9)
       end
     end
   end
